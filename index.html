@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123d35">
+  <title>Urban Walking · Motion Recorder</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="recorder.js" defer></script>
+</head>
+<body>
+<main>
+  <header><p class="eyebrow">URBAN WALKING EFFICIENCY TRACKER</p><h1>A walk, measured.</h1><p>Assignment 2 · iPhone motion recorder</p></header>
+  <section class="card" aria-label="Recorder">
+    <p id="state" class="badge">READY</p>
+    <p id="status" role="status">Open in iPhone Safari over HTTPS, then tap Start.</p>
+    <div class="summary"><div><span>Elapsed</span><strong id="elapsed">0.0 s</strong></div><div><span>Valid readings</span><strong id="count">0</strong></div></div>
+    <p id="goal">Target: at least 1,000 real readings</p>
+    <div class="readings"><div><span>ax</span><strong id="ax">—</strong></div><div><span>ay</span><strong id="ay">—</strong></div><div><span>az</span><strong id="az">—</strong></div><div><span>Magnitude</span><strong id="atotal">—</strong></div></div>
+    <p class="small">Acceleration in m/s² · gravity excluded · device axes</p>
+    <div class="buttons"><button id="start">Start recording</button><button id="stop" disabled>Stop</button><button id="download" disabled>Download CSV</button></div>
+    <p id="details" class="small">No recording yet.</p>
+  </section>
+  <aside><h2>Keep this page open and the screen awake.</h2><p>Switching apps, changing tabs or locking the screen stops this recording when detected. Recording never resumes automatically. Download your data before leaving or starting a new session.</p><p>Only complete, finite readings excluding gravity are saved. Missing readings are skipped; no samples are invented.</p></aside>
+  <footer>Data stays in this page’s memory until you download it. Reloading loses it.<br>AI-assisted source code · disclose this assistance in your assignment.</footer>
+</main>
+</body>
+</html>

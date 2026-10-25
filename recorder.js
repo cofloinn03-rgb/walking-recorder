@@ -1,4 +1,3 @@
-/* AI-assisted source. Review, understand and disclose assistance in Assignment 2. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);

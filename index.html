@@ -7,10 +7,30 @@
   <title>Urban Walking · Motion Recorder</title>
   <link rel="stylesheet" href="styles.css">
   <script src="recorder.js" defer></script>
+  <script src="cloud.js" type="module"></script>
 </head>
 <body>
 <main>
-  <header><p class="eyebrow">URBAN WALKING EFFICIENCY TRACKER</p><h1>A walk, measured.</h1><p>Assignment 2 · iPhone motion recorder</p></header>
+  <header><p class="eyebrow">URBAN WALKING EFFICIENCY TRACKER</p><h1>A walk, measured.</h1><p>Assignment 3 · Cloud connection setup</p></header>
+  <section class="card cloud-card" aria-labelledby="cloud-heading">
+    <h2 id="cloud-heading">Firebase connection</h2>
+    <p class="small">Phase 1: sign in and check cloud storage. Walking readings still use CSV only.</p>
+    <p id="cloud-status" role="status" aria-live="polite">Loading Firebase…</p>
+    <form id="login-form">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button id="sign-in" type="submit" disabled>Sign in</button>
+    </form>
+    <p id="cloud-user" class="small"></p>
+    <div class="buttons">
+      <button id="test-upload" disabled>Test cloud connection</button>
+      <button id="sign-out" disabled>Sign out</button>
+    </div>
+    <p id="cloud-result" class="small" aria-live="polite"></p>
+    <p class="small">The test stores connection metadata, not acceleration or walking samples. Internet access is required.</p>
+  </section>
   <section class="card" aria-label="Recorder">
     <p id="state" class="badge">READY</p>
     <p id="status" role="status">Open in iPhone Safari over HTTPS, then tap Start.</p>

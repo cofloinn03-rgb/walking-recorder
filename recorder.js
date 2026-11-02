@@ -14,6 +14,7 @@
     if (!recording && !pending) return;
     session++; pending = false;
     if (recording) ui.elapsed.textContent = ((performance.now()-started)/1000).toFixed(1)+' s';
+    if (recording) window.walkingCloud?.finish({endedAt: new Date().toISOString(), skipped, reason: message});
     recording = false;
     clearInterval(timer);
     window.removeEventListener('devicemotion', motion);
@@ -32,6 +33,7 @@
     if (!Number.isFinite(magnitude)) { skipped++; return; }
     const now = performance.now(); lastValid = now;
     rows.push([new Date(origin + now-started).toISOString(),a.x,a.y,a.z,magnitude]);
+    window.walkingCloud.add(rows[rows.length-1]);
     ui.count.textContent = rows.length.toLocaleString();
     for (const [id,value] of [['ax',a.x],['ay',a.y],['az',a.z],['atotal',magnitude]]) ui[id].textContent = value.toFixed(3);
     ui.goal.textContent = rows.length >= 1000 ? 'Target reached: 1,000+ valid readings. You can Stop and download.' : `${(1000-rows.length).toLocaleString()} more readings to reach 1,000`;
@@ -40,7 +42,8 @@
   }
   ui.start.addEventListener('click', async () => {
     if (recording || pending) return;
-    if (!window.isSecureContext) { ui.status.textContent = 'HTTPS required. Upload all three web files to an HTTPS host and open that URL in Safari.'; return; }
+    if (!window.walkingCloud?.canStart()) { ui.status.textContent = 'Sign in to Firebase first. Finish pending uploads from the previous session before starting another.'; return; }
+    if (!window.isSecureContext) { ui.status.textContent = 'HTTPS required. Upload all five web files to an HTTPS host and open that URL in Safari.'; return; }
     if (typeof window.DeviceMotionEvent === 'undefined') { ui.status.textContent = 'Motion API unavailable in this browser. Test in Safari on an actual iPhone.'; return; }
     if (document.visibilityState !== 'visible') return;
     if (rows.length && !window.confirm('Start a new session and replace the current readings? Cancel to download them first.')) return;
@@ -55,7 +58,9 @@
         if (permission !== 'granted') throw new Error('Motion permission denied. Allow motion access for this website in Safari, then retry.');
       }
       if (attempt !== session || document.visibilityState !== 'visible') return;
-      rows = []; skipped = 0; started = performance.now(); origin = Date.now(); lastValid = started;
+      const startTime = Date.now();
+      window.walkingCloud.begin(new Date(startTime).toISOString());
+      rows = []; skipped = 0; started = performance.now(); origin = startTime; lastValid = started;
       recording = true; pending = false;
       ui.count.textContent = '0'; ui.elapsed.textContent = '0.0 s';
       for (const id of ['ax','ay','az','atotal']) ui[id].textContent = '—';
@@ -97,5 +102,6 @@
   window.addEventListener('beforeunload', event => {
     if (rows.length || recording) { event.preventDefault(); event.returnValue = ''; }
   });
+  window.addEventListener('cloud-auth-lost', () => stop('Stopped: cloud sign-in changed. Sign back in as the session owner and download your CSV.'));
   controls();
 })();

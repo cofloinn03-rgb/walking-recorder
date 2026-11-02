@@ -3,11 +3,14 @@ const form = $('login-form');
 const status = $('cloud-status');
 const result = $('cloud-result');
 let auth, db, api, user = null, busy = false, ready = false;
+let uploader = null;
+let linkOnline = false;
+const locked = () => !!uploader && !uploader.idle();
 
 function controls() {
   $('sign-in').disabled = !ready || busy;
-  $('test-upload').disabled = !ready || busy || !user;
-  $('sign-out').disabled = !ready || busy || !user;
+  $('test-upload').disabled = !ready || busy || !user || locked();
+  $('sign-out').disabled = !ready || busy || !user || locked();
   $('email').disabled = busy;
   $('password').disabled = busy;
   form.hidden = !!user;
@@ -44,8 +47,19 @@ async function load() {
     });
     auth = api.getAuth(app);
     db = api.getDatabase(app);
+    uploader = new window.WalkUploader({
+      write: (path, value) => api.set(api.ref(db, path), value),
+      stamp: () => api.serverTimestamp(),
+      onChange: updateUpload
+    });
+    api.onValue(api.ref(db, '.info/connected'), snapshot => {
+      linkOnline = snapshot.val() === true;
+      if (linkOnline) uploader.retry();
+      updateUpload();
+    });
     await api.setPersistence(auth, api.browserSessionPersistence);
     api.onAuthStateChanged(auth, account => {
+      if (uploader && !uploader.idle() && (!account || account.uid !== user?.uid)) window.dispatchEvent(new Event('cloud-auth-lost'));
       user = account;
       ready = true;
       if (!busy) status.textContent = user ? 'Signed in. Ready to test cloud storage.' : 'Sign in using the Firebase user you created.';
@@ -74,7 +88,7 @@ form.addEventListener('submit', async event => {
 });
 
 $('sign-out').addEventListener('click', async () => {
-  if (!ready || busy) return;
+  if (!ready || busy || locked()) return;
   busy = true; controls();
   try {
     await api.signOut(auth);
@@ -85,7 +99,7 @@ $('sign-out').addEventListener('click', async () => {
 });
 
 $('test-upload').addEventListener('click', async () => {
-  if (!ready || busy || !user) return;
+  if (!ready || busy || !user || locked()) return;
   if (!navigator.onLine) { status.textContent = 'You appear offline. Connect to the internet before testing.'; return; }
   const account = user;
   const target = api.push(api.ref(db, `users/${account.uid}/connectionTests`));
@@ -117,5 +131,40 @@ $('test-upload').addEventListener('click', async () => {
   } finally { clearTimeout(slow); busy = false; controls(); }
 });
 
+function updateUpload() {
+  if (!uploader) return;
+  const s = uploader.state();
+  $('uploaded').textContent = s.confirmed.toLocaleString();
+  $('pending-count').textContent = (s.total-s.confirmed).toLocaleString();
+  $('upload-session').textContent = s.id ? `Session: ${s.id} | Database: users/${s.uid}/walkingSessions/${s.id}` : '';
+  $('retry-upload').disabled = !s.failed || !user || user.uid !== s.uid;
+  let message = 'No walking session yet.';
+  if (s.id) {
+    if (!user || user.uid !== s.uid) message = 'Sign back in as the session owner to finish uploads. Download your CSV.';
+    else if (s.failed) message = `Upload failed (${s.error}). Pending readings retained. Check permissions/connection, then Retry.`;
+    else if (!linkOnline && !uploader.idle()) message = 'Disconnected: readings remain pending. Keep this page open; upload resumes on reconnect.';
+    else if (s.recording) message = 'Recording; uploading approximately once per second. Counts increase only after server acknowledgement.';
+    else if (uploader.idle()) message = 'Session fully uploaded. Download your CSV before leaving.';
+    else message = 'Finishing uploads. Keep this page open until Session fully uploaded appears.';
+  }
+  $('upload-status').textContent = message;
+  controls();
+}
+window.walkingCloud = {
+  canStart: () => ready && !!user && !busy && !!uploader && uploader.idle(),
+  begin(startedAt) {
+    if (!this.canStart()) throw new Error('Cloud not ready. Sign in and finish pending uploads.');
+    const id = api.push(api.ref(db, `users/${user.uid}/walkingSessions`)).key;
+    uploader.begin(user.uid, id, startedAt);
+  },
+  add: row => uploader.add(row),
+  finish: meta => uploader.finish(meta)
+};
+$('retry-upload').addEventListener('click', () => {
+  if (user && user.uid === uploader?.state().uid) uploader.retry();
+});
+window.addEventListener('beforeunload', event => {
+  if (locked()) { event.preventDefault(); event.returnValue = ''; }
+});
 controls();
 load();

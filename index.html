@@ -6,15 +6,16 @@
   <meta name="theme-color" content="#123d35">
   <title>Urban Walking · Motion Recorder</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="uploader.js" defer></script>
   <script src="recorder.js" defer></script>
   <script src="cloud.js" type="module"></script>
 </head>
 <body>
 <main>
-  <header><p class="eyebrow">URBAN WALKING EFFICIENCY TRACKER</p><h1>A walk, measured.</h1><p>Assignment 3 · Cloud connection setup</p></header>
+  <header><p class="eyebrow">URBAN WALKING EFFICIENCY TRACKER</p><h1>A walk, measured.</h1><p>Assignment 3 · Live cloud recorder</p></header>
   <section class="card cloud-card" aria-labelledby="cloud-heading">
     <h2 id="cloud-heading">Firebase connection</h2>
-    <p class="small">Phase 1: sign in and check cloud storage. Walking readings still use CSV only.</p>
+    <p class="small">Sign in before recording. Genuine walking readings upload in small batches while this page stays open.</p>
     <p id="cloud-status" role="status" aria-live="polite">Loading Firebase…</p>
     <form id="login-form">
       <label for="email">Email</label>
@@ -28,6 +29,11 @@
       <button id="test-upload" disabled>Test cloud connection</button>
       <button id="sign-out" disabled>Sign out</button>
     </div>
+    <div class="summary"><div><span>Cloud-confirmed readings</span><strong id="uploaded">0</strong></div><div><span>Pending readings</span><strong id="pending-count">0</strong></div></div>
+    <p id="upload-status" role="status">No walking session yet.</p>
+    <p id="upload-session" class="small"></p>
+    <button id="retry-upload" disabled>Retry failed upload</button>
+    <p class="small">After Stop, wait for “Session fully uploaded” and download your CSV. Pending data is held in this page's memory; closing or reloading can lose it.</p>
     <p id="cloud-result" class="small" aria-live="polite"></p>
     <p class="small">The test stores connection metadata, not acceleration or walking samples. Internet access is required.</p>
   </section>

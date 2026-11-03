@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="uploader.js" defer></script>
   <script src="recorder.js" defer></script>
+  <script src="weather.js" defer></script>
   <script src="cloud.js" type="module"></script>
 </head>
 <body>
@@ -15,7 +16,7 @@
   <header><p class="eyebrow">URBAN WALKING EFFICIENCY TRACKER</p><h1>A walk, measured.</h1><p>Assignment 3 · Live cloud recorder</p></header>
   <section class="card cloud-card" aria-labelledby="cloud-heading">
     <h2 id="cloud-heading">Firebase connection</h2>
-    <p class="small">Sign in before recording. Genuine walking readings upload in small batches while this page stays open.</p>
+    <p class="small">Sign in before recording. Genuine walking readings uploaded in small batches while this page stays open.</p>
     <p id="cloud-status" role="status" aria-live="polite">Loading Firebase…</p>
     <form id="login-form">
       <label for="email">Email</label>
@@ -29,17 +30,16 @@
       <button id="test-upload" disabled>Test cloud connection</button>
       <button id="sign-out" disabled>Sign out</button>
     </div>
-    <div class="summary"><div><span>Cloud-confirmed readings</span><strong id="uploaded">0</strong></div><div><span>Pending readings</span><strong id="pending-count">0</strong></div></div>
+    <div class="summary"><div><span>Cloud confirmed readings</span><strong id="uploaded">0</strong></div><div><span>Pending readings</span><strong id="pending-count">0</strong></div></div>
     <p id="upload-status" role="status">No walking session yet.</p>
     <p id="upload-session" class="small"></p>
     <button id="retry-upload" disabled>Retry failed upload</button>
-    <p class="small">After Stop, wait for “Session fully uploaded” and download your CSV. Pending data is held in this page's memory; closing or reloading can lose it.</p>
+    <p class="small">After Stop, wait for “Session fully uploaded” and download your CSV.</p>
     <p id="cloud-result" class="small" aria-live="polite"></p>
-    <p class="small">The test stores connection metadata, not acceleration or walking samples. Internet access is required.</p>
   </section>
   <section class="card" aria-label="Recorder">
     <p id="state" class="badge">READY</p>
-    <p id="status" role="status">Open in iPhone Safari over HTTPS, then tap Start.</p>
+    <p id="status" role="status">Open in iPhone Safari, then tap Start.</p>
     <div class="summary"><div><span>Elapsed</span><strong id="elapsed">0.0 s</strong></div><div><span>Valid readings</span><strong id="count">0</strong></div></div>
     <p id="goal">Target: at least 1,000 real readings</p>
     <div class="readings"><div><span>ax</span><strong id="ax">—</strong></div><div><span>ay</span><strong id="ay">—</strong></div><div><span>az</span><strong id="az">—</strong></div><div><span>Magnitude</span><strong id="atotal">—</strong></div></div>
@@ -47,7 +47,16 @@
     <div class="buttons"><button id="start">Start recording</button><button id="stop" disabled>Stop</button><button id="download" disabled>Download CSV</button></div>
     <p id="details" class="small">No recording yet.</p>
   </section>
-  <aside><h2>Keep this page open and the screen awake.</h2><p>Switching apps, changing tabs or locking the screen stops this recording when detected. Recording never resumes automatically. Download your data before leaving or starting a new session.</p><p>Only complete, finite readings excluding gravity are saved. Missing readings are skipped; no samples are invented.</p></aside>
+  <section class="card" aria-labelledby="weather-heading" style="margin-top:22px">
+    <h2 id="weather-heading">Dublin weather collector</h2>
+    <p>Collect current model based weather for Dublin city centre, Sign in, start the collector and keep this tab open.</p>
+    <div class="buttons"><button id="weather-start" disabled>Start weather collection</button><button id="weather-stop" disabled>Stop weather collection</button></div>
+    <p id="weather-status" role="status">Waiting for sign in.</p>
+    <p>New records saved this run: <strong id="weather-count">0</strong></p>
+    <p id="weather-latest" class="small"></p>
+    <p class="small">Weather data by <a href="https://open-meteo.com/">Open-Meteo</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Model estimates.</p>
+  </section>
+  <aside><h2>Keep this page open and the screen awake.</h2><p>Switching apps, changing tabs or locking the screen stops this recording when detected. Download your data before leaving or starting a new session.</p><p>Only complete, readings excluding gravity are saved.</p></aside>
 </main>
 </body>
 </html>

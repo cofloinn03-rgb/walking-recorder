@@ -4,6 +4,7 @@ const status = $('cloud-status');
 const result = $('cloud-result');
 let auth, db, api, user = null, busy = false, ready = false;
 let uploader = null;
+let refreshWeather = () => {};
 let linkOnline = false;
 const locked = () => !!uploader && !uploader.idle();
 
@@ -58,9 +59,22 @@ async function load() {
       updateUpload();
     });
     await api.setPersistence(auth, api.browserSessionPersistence);
+    refreshWeather = window.mountWeather({
+      getUser: () => user,
+      save: async (uid, timestamp, record) => {
+        if (user?.uid !== uid) throw new Error('Sign-in changed');
+        const path = `users/${uid}/openData/openMeteo/dublin-city-centre/${timestamp}`;
+        const result = await api.runTransaction(api.ref(db, path), current => {
+          if (current !== null) return undefined;
+          return {...record, serverStoredAt: api.serverTimestamp()};
+        }, {applyLocally: false});
+        return result.committed;
+      }
+    });
     api.onAuthStateChanged(auth, account => {
       if (uploader && !uploader.idle() && (!account || account.uid !== user?.uid)) window.dispatchEvent(new Event('cloud-auth-lost'));
       user = account;
+      refreshWeather();
       ready = true;
       if (!busy) status.textContent = user ? 'Signed in. Ready to test cloud storage.' : 'Sign in using the Firebase user you created.';
       controls();
@@ -109,7 +123,7 @@ $('test-upload').addEventListener('click', async () => {
   result.textContent = `Database path: ${target.toString()}`;
   // This timer reports a delay only: it must not falsely cancel an in-flight write.
   const slow = setTimeout(() => {
-    status.textContent = 'Still waiting for confirmation. A write may be pending. Keep this page open and restore your connection; no cloud success has been confirmed.';
+    status.textContent = 'Still waiting for confirmation. A write may be pending. Keep this page open and restore your connection, no cloud success has been confirmed.';
   }, 15000);
   try {
     await api.set(target, {
@@ -127,7 +141,7 @@ $('test-upload').addEventListener('click', async () => {
     status.textContent = 'Success: Firebase acknowledged the write and the stored record was read back correctly.';
     result.textContent = `Verified at ${new Date(saved.serverTime).toISOString()}. Find it in Realtime Database → Data → users → ${account.uid} → connectionTests → ${checkId}. Walking readings have not been uploaded.`;
   } catch (error) {
-    status.textContent = explain(error) + ' The check was not verified; inspect the displayed database path before retrying.';
+    status.textContent = explain(error) + ' The check was not verified, inspect the displayed database path before retrying.';
   } finally { clearTimeout(slow); busy = false; controls(); }
 });
 
@@ -142,7 +156,7 @@ function updateUpload() {
   if (s.id) {
     if (!user || user.uid !== s.uid) message = 'Sign back in as the session owner to finish uploads. Download your CSV.';
     else if (s.failed) message = `Upload failed (${s.error}). Pending readings retained. Check permissions/connection, then Retry.`;
-    else if (!linkOnline && !uploader.idle()) message = 'Disconnected: readings remain pending. Keep this page open; upload resumes on reconnect.';
+    else if (!linkOnline && !uploader.idle()) message = 'Disconnected: readings remain pending. Keep this page open, upload resumes on reconnect.';
     else if (s.recording) message = 'Recording; uploading approximately once per second. Counts increase only after server acknowledgement.';
     else if (uploader.idle()) message = 'Session fully uploaded. Download your CSV before leaving.';
     else message = 'Finishing uploads. Keep this page open until Session fully uploaded appears.';
